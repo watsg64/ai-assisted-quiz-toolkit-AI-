@@ -14,14 +14,28 @@ class ICTHelperApp:
         self.root.title("华为ICT校赛 - 刷题助手 (插件版)")
         center_window(self.root, 700, 580)
         self.root.configure(bg=COLOR_BG)
-        self.root.resizable(False, False)
+        
+        # 🌟 修改：允许用户自由拉伸窗口，但设置最小尺寸防破相
+        self.root.resizable(True, True)
+        self.root.minsize(700, 580)
 
         self.default_file = get_abs_path("ict_questions.csv")
         self.all_questions, self.grouped, self.paper = [], {}, []
         self.current_index, self.score = 0, 0
 
+        # 绑定窗口大小变化事件
+        self.root.bind("<Configure>", self._on_window_resize)
+
         self.setup_start_ui()
         self.load_data_auto()
+
+    def _on_window_resize(self, event):
+        if event.widget == self.root:
+            if hasattr(self, 'lbl_question') and self.lbl_question.winfo_exists():
+                # 🌟 修改：加上最大宽度限制
+                new_wrap = min(int(event.width * 0.75), 1000) 
+                self.lbl_question.config(wraplength=new_wrap)
+                self.lbl_options.config(wraplength=new_wrap)
 
     def clear_window(self):
         for widget in self.root.winfo_children(): widget.destroy()
@@ -34,7 +48,8 @@ class ICTHelperApp:
         self.lbl_info.pack(pady=5)
 
         frame_mode = tk.Frame(self.root, bg="#fff", padx=20, pady=20, relief="groove", bd=2)
-        frame_mode.pack(pady=10, fill="x", padx=50)
+        frame_mode.pack(pady=10)
+        frame_mode.config(width=580)
 
         tk.Label(frame_mode, text="【专项练习】", font=("微软雅黑", 14, "bold"), bg="#fff").grid(row=0, column=0, columnspan=3, pady=5, sticky="w")
         tk.Label(frame_mode, text="选择题型:", font=("微软雅黑", 12), bg="#fff").grid(row=1, column=0, pady=10, sticky="w")
@@ -109,7 +124,7 @@ class ICTHelperApp:
         else:
             for exe_name in exe_files:
                 def run_exe(name=exe_name):
-                    try: subprocess.Popen([os.path.join(current_dir, name)], shell=True)
+                    try: subprocess.Popen([os.path.join(current_dir, name)], cwd=current_dir)
                     except Exception as e: messagebox.showerror("启动失败", f"无法启动 {name}：\n{e}")
                 create_button(win, f"🔧 {exe_name[:-4]}", run_exe).pack(pady=8)
         create_button(win, "关闭", win.destroy, "danger").pack(pady=20)
@@ -127,13 +142,11 @@ class ICTHelperApp:
         except ValueError: return messagebox.showerror("错误", "请输入有效数字")
         
         paper = []
-        # 按比例抽
         for cat, ratio in {"单选题": 0.4, "多选题": 0.3, "判断题": 0.3}.items():
             count = int(num * ratio)
             if count > 0 and cat in self.grouped:
                 paper.extend(random.sample(self.grouped[cat], min(count, len(self.grouped[cat]))))
                 
-        # 🌟 补足逻辑：如果题库太小抽不满，用剩下的题补齐！
         if len(paper) < num:
             remaining = [q for q in self.all_questions if q not in paper]
             random.shuffle(remaining)
@@ -163,9 +176,11 @@ class ICTHelperApp:
 
         self.lbl_type = tk.Label(main_frame, text="", font=("微软雅黑", 12, "bold"), bg="#fff", fg="#FF9800")
         self.lbl_type.pack(anchor="w")
-        self.lbl_question = tk.Label(main_frame, text="", font=("微软雅黑", 16), bg="#fff", justify="left", wraplength=600)
+        
+        self.lbl_question = tk.Label(main_frame, text="", font=("微软雅黑", 16), bg="#fff", justify="left")
         self.lbl_question.pack(anchor="w", pady=(10, 20))
-        self.lbl_options = tk.Label(main_frame, text="", font=("微软雅黑", 14), bg="#fff", fg="#333", justify="left", wraplength=600)
+        
+        self.lbl_options = tk.Label(main_frame, text="", font=("微软雅黑", 14), bg="#fff", fg="#333", justify="left")
         self.lbl_options.pack(anchor="w", pady=(0, 20))
 
         input_frame = tk.Frame(main_frame, bg="#fff")
@@ -232,4 +247,14 @@ class ICTHelperApp:
 if __name__ == "__main__":
     root = tk.Tk()
     app = ICTHelperApp(root)
+    try:
+        root.state("zoomed")
+    except tk.TclError:
+        root.attributes("-fullscreen", True)
+    def _toggle_fullscreen(event=None):
+        root.attributes("-fullscreen", not root.attributes("-fullscreen"))
+    def _exit_fullscreen(event=None):
+        root.attributes("-fullscreen", False)
+    root.bind("<F11>", _toggle_fullscreen)
+    root.bind("<Escape>", _exit_fullscreen)
     root.mainloop()
