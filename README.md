@@ -74,7 +74,7 @@
 
 ## 🚀 快速开始
 
-1. 前往 [Releases](这里换成你的Release链接) 页面，下载最新的 `.zip` 压缩包。
+1. 前往 [Releases](https://github.com/watsg64/ai-assisted-quiz-toolkit-AI-?tab=readme-ov-file)页面，下载最新的 `.zip` 压缩包。
 2. 将压缩包解压到一个**纯英文或无特殊字符的文件夹**中（确保所有 `.exe` 都在同一个文件夹内）。
 3. 双击 **`ai_答题工具主程序.exe`** 即可启动。
 4. 初始无题库时，可使用转换器生成标准的 `ict_questions.csv`，或直接通过主程序手动导入题库。
